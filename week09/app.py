@@ -5,14 +5,17 @@ import plotly.express as px
 # Set page config for a wide dashboard layout
 st.set_page_config(page_title="World Happiness", page_icon="🌍", layout="wide")
 
-# Load data - safely handle paths
+# Load data - safely handle paths for both local running and Streamlit Cloud
 try:
-    df = pd.read_csv('../data/world_happiness_2023.csv')
+    df = pd.read_csv('week09/world_happiness_2023.csv') # First check inside week09 folder (Streamlit Cloud)
 except FileNotFoundError:
     try:
-        df = pd.read_csv('data/world_happiness_2023.csv')
+        df = pd.read_csv('world_happiness_2023.csv') # Second check right next to app.py (Local laptop)
     except FileNotFoundError:
-        df = pd.read_csv('world_happiness_2023.csv')
+        try:
+            df = pd.read_csv('../data/world_happiness_2023.csv')
+        except FileNotFoundError:
+            df = pd.read_csv('data/world_happiness_2023.csv')
 
 df.columns = ['Country','Region','Score','GDP','Social_Support',
               'Life_Expectancy','Freedom','Generosity','Corruption']
@@ -78,40 +81,4 @@ st.markdown(
 
 # Create a calculated column for variance from the mean
 filtered_dev = filtered.copy()
-filtered_dev['Deviation'] = filtered_dev['Score'] - global_avg_score
-
-# Sort to show highest and lowest clear variations
-dev_subset = filtered_dev.dropna(subset=['Deviation']).sort_values('Deviation')
-
-# Take top 10 and bottom 10 for better readability if "All" is selected
-if selected_region == 'All':
-    dev_subset = pd.concat([dev_subset.head(10), dev_subset.tail(10)]).drop_duplicates().sort_values('Deviation')
-
-# Diverging Color Scale: 'RdBu' (Red for negative deviation, Blue for positive)
-fig3 = px.bar(dev_subset, x='Deviation', y='Country', orientation='h',
-              color='Deviation',
-              color_continuous_scale='RdBu', 
-              color_continuous_midpoint=0.0,
-              labels={'Deviation': 'Distance from Global Avg', 'Country': ''})
-
-fig3.update_layout(
-    plot_bgcolor='white', 
-    paper_bgcolor='white',
-    font=dict(family='Arial', size=12),
-    coloraxis_showscale=True,
-    margin=dict(l=10, r=10, t=30, b=10)
-)
-
-# Labeling the midpoint (0 deviation line) with an annotation
-fig3.add_vline(x=0, line_dash="dash", line_color="gray", line_width=1.5)
-fig3.add_annotation(
-    x=0, y=1.05, yref="paper",
-    text=f"Global Avg ({global_avg_score:.2f})",
-    showarrow=False,
-    font=dict(color="gray", size=11, style="italic")
-)
-
-st.plotly_chart(fig3, use_container_width=True)
-
-st.divider()
-st.caption("Built with Streamlit + Plotly")
+filtered_dev
